@@ -1,2 +1,12 @@
 # dice
-dice: a test program for random numbers generation
+dice: A test program for random numbers generation
+
+# How To Build
+
+Standard build with cmake:  
+
+mkdir build    
+cd build    
+cmake ..    
+make    
+./dice    
