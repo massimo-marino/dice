@@ -3,7 +3,9 @@ SET(THE_PROJECT dice)
 
 cmake_minimum_required(VERSION 3.26)
 
-PROJECT(${THE_PROJECT} VERSION 1.0.0 DESCRIPTION "dice")
+set(CMAKE_CXX_COMPILER clang++)  ## clang++ shows much better performance at run-time than g++
+
+PROJECT(${THE_PROJECT} LANGUAGES CXX VERSION 1.0.0 DESCRIPTION "dice: test code for random number generation")
 
 # C++ version
 SET(CMAKE_CXX_STANDARD 17)
@@ -27,7 +29,7 @@ endif()
 
 # Set more compiler flags for release mode; -O3 is automatically set
 if(CMAKE_BUILD_TYPE MATCHES Release)
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 endif()
 
 # Set the variable source_files to the list of names of your C++ source code
