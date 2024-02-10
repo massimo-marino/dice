@@ -34,18 +34,12 @@ public:
     std::cout << "Deterministic:     " << ((deterministic) ? "Yes" : "No") << std::endl << std::endl;
   }
 
-  // generate numbers in [1, sides]
-  explicit Dice(const VALUE_TYPE sides, seedType seed) :
-      sides_ {sides},
-      distr_ {1, sides_},
-      urbg_  {seed}
-  {}
-
   // generate numbers in [startFrom, (startFrom + (sides - 1)))]
-  explicit Dice(seedType seed, const VALUE_TYPE sides, const VALUE_TYPE startFrom) :
+  // and seed with clock
+  explicit Dice(const VALUE_TYPE sides, const VALUE_TYPE startFrom) :
       sides_ {sides},
       distr_ {startFrom, (startFrom + (sides_ - 1))},
-      urbg_  {seed}
+      urbg_  {static_cast<unsigned long>(std::chrono::system_clock::now().time_since_epoch().count())}
   {}
 
   void reSeed(seedType newSeed) const noexcept {
@@ -69,7 +63,9 @@ static void printResults(const Container& c, size_t howMany = 0) {
   for (const auto item : c) {
     std:: cout << item << ' ';
     ++counter;
-    if (counter == howMany) {
+    if (counter == c.size()) {
+      break;
+    } else if (counter == howMany) {
       std::cout << "...";
       break;
     }
@@ -78,11 +74,15 @@ static void printResults(const Container& c, size_t howMany = 0) {
 }
 
 template <typename Func>
-void getExecutionTime(const std::string& title, Func func) {
-  const auto start {std::chrono::steady_clock::now()};
+static void getExecutionTime(const std::string& title, Func func) {
+  const auto startTime { std::chrono::high_resolution_clock::now() };
+
   func();
-  const std::chrono::duration<double> dur {std::chrono::steady_clock::now() - start};
-  std::cout << title << dur.count() << " sec." << std::endl;
+
+  const auto endTime { std::chrono::high_resolution_clock::now() };
+  const auto takenTimeNsec { std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime).count() };
+  const std::chrono::duration<double> takenTimeSec { endTime - startTime };
+  std::cout << title << takenTimeSec.count() << " sec. - " << takenTimeNsec << " nsec.\n";
 }
 
 // ----------------------------------------------------------------------------
@@ -91,110 +91,97 @@ constexpr unsigned int SIDES {20};
 constexpr std::size_t RANDOM_VALUES          {500'000'000};
 constexpr std::size_t RANDOM_VALUES_IN_ARRAY {500'000};
 
+static void generateRollsArray(auto policyType, const std::string& prompt, auto& dice) {
+  std::array<unsigned int, RANDOM_VALUES_IN_ARRAY> rolls;
+
+  dice.reSeedWithClock();
+  getExecutionTime(prompt,
+                   [&rolls, &dice, policyType] () mutable {
+                     std::for_each(policyType, rolls.begin(), rolls.end(), [&dice](unsigned int &arg) { arg = dice(); });
+                     //std::transform(policyType, rolls.begin(), rolls.end(), rolls.begin(), [&dice] ([[maybe_unused]] unsigned int arg) { return dice(); } );
+                     });
+}
+
 static void diceWithArrays(const unsigned int sides) {
-  // make a dice and seed with clock:
-  const auto ticks { std::chrono::system_clock::now().time_since_epoch().count() };
-  Dice<> dice(ticks, sides, 0);
+  // make a dice and seed with clock
+  Dice<>dice(sides, 0);
 
-  constexpr size_t printItems {20};
-
-  // generate sequence of dice rolls:
+  // generate sequence of dice rolls
   constexpr std::size_t randomValues {RANDOM_VALUES_IN_ARRAY};
-  std::array<unsigned int, randomValues> rolls_1;
-  std::array<unsigned int, randomValues> rolls_2;
-  std::array<unsigned int, randomValues> rolls_3;
-  std::array<unsigned int, randomValues> rolls_4;
 
-  std::cout << "Test run with container: std::array" << std::endl;
+  std::cout << "Test run with container: std::array" << " size: " << randomValues << std::endl;
 
-  getExecutionTime("1- std::generate:             ",
-                   [&rolls_1, &dice] () mutable {
-                     std::generate(begin(rolls_1), end(rolls_1), dice);
-                   } );
+  {
+    std::array<unsigned int, randomValues> rolls;
+    getExecutionTime("1- std::generate:            ",
+	             [&rolls, &dice] () mutable {
+	               std::generate(begin(rolls), end(rolls), dice);
+	             } );
+  }
 
-  dice.reSeedWithClock();
-  getExecutionTime("2- std::execution::seq:       ",
-                   [&rolls_2, &dice] () mutable {
-                     std::transform(std::execution::seq, rolls_2.begin(), rolls_2.end(),
-                                    rolls_2.begin(), [&dice] (int arg) { return dice(); } ); });
+  generateRollsArray(std::execution::seq,       "2- std_execution::seq:       ", dice);
+  generateRollsArray(std::execution::unseq,     "3- std_execution::unseq:     ", dice);
+  generateRollsArray(std::execution::par,       "4- std_execution::par:       ", dice);
+  generateRollsArray(std::execution::par_unseq, "5- std_execution::par_unseq: ", dice);
 
-  dice.reSeedWithClock();
-  getExecutionTime("3- std::execution::par:       ",
-                   [&rolls_3, &dice] () mutable {
-                     std::transform(std::execution::par, rolls_3.begin(), rolls_3.end(),
-                                    rolls_3.begin(), [&dice] (int arg) { return dice(); } ); });
-
-  dice.reSeedWithClock();
-  getExecutionTime("4- std::execution::par_unseq: ",
-                   [&rolls_4, &dice] () mutable {
-                     std::transform(std::execution::par_unseq, rolls_4.begin(), rolls_4.end(),
-                                    rolls_4.begin(), [&dice] (int arg) { return dice(); } ); });
-  // print results:
-  printResults(rolls_1, printItems);
-  printResults(rolls_2, printItems);
-  printResults(rolls_3, printItems);
-  printResults(rolls_4, printItems);
-  std::cout << std::endl << std::endl;
+  std::cout << std::endl;
 }
 
 template <typename Container = std::vector<unsigned int>>
-void diceWithContainer(const std::string containerType,
-                       const unsigned int sides,
-                       const long long randomValues) {
-  // make a dice and seed with clock:
-  const auto ticks { std::chrono::system_clock::now().time_since_epoch().count() };
-  Dice<> dice(ticks, sides, 0);
-
-  constexpr size_t printItems {20};
-
-  // generate sequence of dice rolls:
-  Container rolls_1(randomValues);
-  Container rolls_2(randomValues);
-  Container rolls_3(randomValues);
-  Container rolls_4(randomValues);
-
-  std::cout << "Test run with container: " << containerType << std::endl;
-
-  getExecutionTime("1- std::generate:             ",
-                   [&rolls_1, &dice] () mutable {
-                     std::generate(begin(rolls_1), end(rolls_1), dice);
-                   } );
+static void generateRolls(auto policyType, const std::string& prompt, auto& dice, const std::size_t randomValues) {
+  Container rolls(randomValues);
 
   dice.reSeedWithClock();
-  getExecutionTime("2- std::execution::seq:       ",
-                   [&rolls_2, &dice] () mutable {
-                     std::transform(std::execution::seq, rolls_2.begin(), rolls_2.end(),
-                                    rolls_2.begin(), [&dice] (int arg) { return dice(); } ); });
+  getExecutionTime(prompt,
+                   [&rolls, &dice, policyType] () mutable {
+                     std::for_each(policyType, rolls.begin(), rolls.end(), [&dice](unsigned int &arg) { arg = dice(); });
+                     //std::transform(policyType, rolls.begin(), rolls.end(), rolls.begin(), [&dice] ([[maybe_unused]] unsigned int arg) { return dice(); } );
+                     });
+  //printResults(rolls, 20);
+}
 
-  dice.reSeedWithClock();
-  getExecutionTime("3- std::execution::par:       ",
-                   [&rolls_3, &dice] () mutable {
-                     std::transform(std::execution::par, rolls_3.begin(), rolls_3.end(),
-                                    rolls_3.begin(), [&dice] (int arg) { return dice(); } ); });
+template <typename Container = std::vector<unsigned int>>
+static void diceWithContainer(const std::string containerType,
+                              const unsigned int sides,
+                              const long long randomValues) {
+  // make a dice and seed with clock
+  Dice<>dice(sides, 0);
 
-  dice.reSeedWithClock();
-  getExecutionTime("4- std::execution::par_unseq: ",
-                   [&rolls_4, &dice] () mutable {
-                     std::transform(std::execution::par_unseq, rolls_4.begin(), rolls_4.end(),
-                                    rolls_4.begin(), [&dice] (int arg) { return dice(); } ); });
-  // print results:
-  printResults(rolls_1, printItems);
-  printResults(rolls_2, printItems);
-  printResults(rolls_3, printItems);
-  printResults(rolls_4, printItems);
-  std::cout << std::endl << std::endl;
+  // generate sequence of dice rolls
+  std::cout << "Test run with container: " << containerType << " size: " << randomValues << std::endl;
+
+  {
+    Container rolls(randomValues);
+    getExecutionTime("1- std::generate:            ",
+	             [&rolls, &dice] () mutable {
+	               std::generate(begin(rolls), end(rolls), dice);
+	             } );
+    //printResults(rolls, 20);
+  }
+
+  generateRolls(std::execution::seq,       "2- std_execution::seq:       ", dice, randomValues);
+  generateRolls(std::execution::unseq,     "3- std_execution::unseq:     ", dice, randomValues);
+  generateRolls(std::execution::par,       "4- std_execution::par:       ", dice, randomValues);
+  generateRolls(std::execution::par_unseq, "5- std_execution::par_unseq: ", dice, randomValues);
+
+  std::cout << std::endl;
 }
 
 int main() {
   Dice<>::checkNonDeterministicEntropySource();
+
   diceWithArrays(SIDES);
   diceWithArrays(SIDES);
+
   diceWithContainer<std::deque<unsigned int>>("std::deque",   SIDES, RANDOM_VALUES_IN_ARRAY);
   diceWithContainer<std::deque<unsigned int>>("std::deque",   SIDES, RANDOM_VALUES_IN_ARRAY);
+
   diceWithContainer<std::vector<unsigned int>>("std::vector", SIDES, RANDOM_VALUES_IN_ARRAY);
   diceWithContainer<std::vector<unsigned int>>("std::vector", SIDES, RANDOM_VALUES_IN_ARRAY);
+
   diceWithContainer<std::deque<unsigned int>>("std::deque",   SIDES, RANDOM_VALUES);
   diceWithContainer<std::deque<unsigned int>>("std::deque",   SIDES, RANDOM_VALUES);
+
   diceWithContainer<std::vector<unsigned int>>("std::vector", SIDES, RANDOM_VALUES);
   diceWithContainer<std::vector<unsigned int>>("std::vector", SIDES, RANDOM_VALUES);
   return 0;

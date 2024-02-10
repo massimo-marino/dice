@@ -8,7 +8,7 @@ set(CMAKE_CXX_COMPILER clang++)  ## clang++ shows much better performance at run
 PROJECT(${THE_PROJECT} LANGUAGES CXX VERSION 1.0.0 DESCRIPTION "dice: test code for random number generation")
 
 # C++ version
-SET(CMAKE_CXX_STANDARD 17)
+SET(CMAKE_CXX_STANDARD 20)
 SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 SET(CMAKE_CXX_EXTENSIONS OFF)
 
