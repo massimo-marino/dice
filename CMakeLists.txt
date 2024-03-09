@@ -35,7 +35,7 @@ endif()
 # Set the variable source_files to the list of names of your C++ source code
 # Note the lack of commas or other deliminators
 SET(SOURCE_FILES
-   dice.cpp
+   example.cpp
 )
 
 # Build a program called '${THE_PROJECT}' from the source files we specified above
