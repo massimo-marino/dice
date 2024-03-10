@@ -7,14 +7,13 @@
 #include <array>
 #include <vector>
 #include <deque>
-#include <execution>
 
 // print the contents of a container; all of them by default if howMany is 0
 template <typename Container>
-static void printResults(const Container& c, size_t howMany = 0) {
+static void printResults(const Container& c, std::size_t howMany = 0) {
   howMany = ((0 == howMany) ? c.size() : howMany);
-  std::cout << "results("<< howMany << "/" << c.size() << "): ";
-  size_t counter {0};
+  std::cout << "results ("<< howMany << "/" << c.size() << "): ";
+  std::size_t counter {0};
   for (const auto item : c) {
     std:: cout << item << ' ';
     ++counter;
@@ -54,7 +53,7 @@ constexpr std::size_t RANDOM_VALUES_IN_ARRAY {500'000};
 static void generateRollsArrayWithExecutionPolicy(auto policyType, const std::string& prompt, auto& dice) {
   std::array<RANDOM_VALUE_TYPE, RANDOM_VALUES_IN_ARRAY> rolls;
 
-  dice.reSeedWithClock();
+  dice.doReSeedWithClock();
   getExecutionTime(prompt,
                    [&rolls, &dice, policyType] () mutable {
                      std::for_each(policyType, rolls.begin(), rolls.end(), [&dice] (RANDOM_VALUE_TYPE &arg) { arg = dice(); } );
@@ -65,7 +64,7 @@ static void generateRollsArrayWithExecutionPolicy(auto policyType, const std::st
 static void diceWithArrays(const RANDOM_VALUE_TYPE sides) {
   std::cout << "Test run with container: std::array" << " size: " << RANDOM_VALUES_IN_ARRAY << std::endl;
 
-  // make a dice and seed with clock
+  // make a dice that starts from 0, and seed with clock
   Dice<RANDOM_VALUE_TYPE>dice(sides, 0);
   constexpr std::size_t randomValues {RANDOM_VALUES_IN_ARRAY};
 
@@ -90,7 +89,7 @@ template <typename Container>
 static void generateRollsWithExecutionPolicy(auto policyType, const std::string& prompt, auto& dice, const std::size_t randomValues) {
   Container rolls(randomValues);
 
-  dice.reSeedWithClock();
+  dice.doReSeedWithClock();
   getExecutionTime(prompt,
                    [&rolls, &dice, policyType] () mutable {
                      std::for_each(policyType, rolls.begin(), rolls.end(), [&dice] (RANDOM_VALUE_TYPE &arg) { arg = dice(); } );
@@ -105,7 +104,7 @@ static void diceWithContainer(const std::string containerType,
                               const std::size_t randomValues) {
   std::cout << "Test run with container: " << containerType << " size: " << randomValues << std::endl;
 
-  // make a dice and seed with clock
+  // make a dice that starts from 0, and seed with clock
   Dice<RANDOM_VALUE_TYPE>dice(sides, 0);
 
   // generate sequences of dice rolls
@@ -127,6 +126,7 @@ static void diceWithContainer(const std::string containerType,
 }
 
 static void runTestExamples() {
+  std::cout << "----- runTestExamples - start -----" << std::endl;
   Dice<RANDOM_VALUE_TYPE>::checkNonDeterministicEntropySource();
 
   diceWithArrays(SIDES);
@@ -143,24 +143,70 @@ static void runTestExamples() {
 
   diceWithContainer<std::vector<RANDOM_VALUE_TYPE>>("std::vector", SIDES, RANDOM_VALUES);
   diceWithContainer<std::vector<RANDOM_VALUE_TYPE>>("std::vector", SIDES, RANDOM_VALUES);
+  std::cout << "----- runTestExamples - end -----" << std::endl;
 }
 
 static void makeDiceRolls() {
+  std::cout << "----- makeDiceRolls - start -----" << std::endl;
   using rndType = long;
   using cnt = std::vector<rndType>;
 
-  constexpr rndType diceSides    { 1000 };
-  constexpr rndType howMany      { 20 };
-  constexpr rndType startFrom    { 55 };
-  constexpr auto executionPolicy { std::execution::par };
+  constexpr rndType     diceSides       { 1000 };
+  constexpr std::size_t howMany         { 20 };
+  constexpr rndType     startFrom       { 55 };
+  constexpr auto        executionPolicy { std::execution::par };
 
   const auto rolls { rollDice<cnt, rndType>(diceSides, howMany, startFrom, executionPolicy) };
   printResults<cnt>(rolls, howMany);
+  std::cout << "----- makeDiceRolls - end -----" << std::endl;
+}
+
+static void runDiceRoller() {
+  std::cout << "----- runDiceRoller - start -----" << std::endl;
+  using rndType = unsigned int;
+  using cnt = std::vector<rndType>;
+
+  constexpr rndType     diceSides       { 1000 };
+  constexpr std::size_t howMany         { 20 };
+  constexpr rndType     startFrom       { 55 };
+  constexpr auto        seqExecutionPolicy      { std::execution::seq };
+  constexpr auto        unseqExecutionPolicy    { std::execution::unseq };
+  constexpr auto        parExecutionPolicy      { std::execution::par };
+  constexpr auto        parUnseqexecutionPolicy { std::execution::par_unseq };
+  constexpr auto        executionPolicy         { parExecutionPolicy };
+
+  diceRoller<cnt, rndType> dr(diceSides, howMany, startFrom);
+  dr.info();
+
+  cnt& rolls_1 { dr.rollDice(executionPolicy) };
+  printResults<cnt>(rolls_1, howMany);
+
+  // rolls_2 contents will be the same of rolls_1
+  // rolls_1 and rolls_2 ref to the same object
+  dr.doReSeedWithSame();
+  cnt& rolls_2 { dr.rollDice(executionPolicy) };
+  printResults<cnt>(rolls_2, howMany);
+
+  // rolls_3 contents will be the same of rolls_1 and rolls_2
+  dr.doReSeedWithSame();
+  cnt rolls_3 { dr.rollDice(executionPolicy) };
+  printResults<cnt>(rolls_3, howMany);
+
+  // rolls_4 contents will not be the same of rolls_1, rolls_2, rools_3
+  dr.doReSeedWithClock();
+  cnt rolls_4 { dr.rollDice(executionPolicy) };
+  printResults<cnt>(rolls_4, howMany);
+
+  std::cout << "rolls_1 at: " << &rolls_1 << " must be equal to rolls_2 at " << &rolls_2 << ": " << ((&rolls_1 == &rolls_2) ? "true" : "false") << std::endl;
+  std::cout << "rolls_2 at: " << &rolls_2 << " must be equal to rolls_1 at " << &rolls_1 << ": " << ((&rolls_2 == &rolls_1) ? "true" : "false") << std::endl;
+  std::cout << "rolls_3 at: " << &rolls_3 << " must not be equal to rolls_1 at " << &rolls_1 << " and rolls_2 at " << &rolls_2 << ": " << (((&rolls_3 != &rolls_1) && (&rolls_3 != &rolls_2)) ? "true" : "false") << std::endl;
+  std::cout << "rolls_4 at: " << &rolls_4 << std::endl;
+  std::cout << "----- runDiceRoller - end -----" << std::endl;
 }
 
 int main() {
   runTestExamples();
   makeDiceRolls();
+  runDiceRoller();
   return 0;
 }
-

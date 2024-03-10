@@ -87,72 +87,72 @@ Non deterministic: Yes
 Deterministic:     No
 
 Test run with container: std::array size: 500000
-1- std::generate:            0.00295021 sec. - 2950214 nsec.
-2- std_execution::seq:       0.00290668 sec. - 2906682 nsec.
-3- std_execution::unseq:     0.00265153 sec. - 2651525 nsec.  *
-4- std_execution::par:       0.00371364 sec. - 3713639 nsec.
-5- std_execution::par_unseq: 0.00316311 sec. - 3163106 nsec.
+1- std::generate:            0.00509395 sec. - 5093947 nsec.
+2- std_execution::seq:       0.00296941 sec. - 2969410 nsec.
+3- std_execution::unseq:     0.00290529 sec. - 2905286 nsec.  *
+4- std_execution::par:       0.00293156 sec. - 2931558 nsec.
+5- std_execution::par_unseq: 0.0029385  sec. - 2938496 nsec.
 
 Test run with container: std::array size: 500000
-1- std::generate:            0.00285972 sec. - 2859719 nsec.
-2- std_execution::seq:       0.00289291 sec. - 2892907 nsec.
-3- std_execution::unseq:     0.00264997 sec. - 2649973 nsec.  *
-4- std_execution::par:       0.00281700 sec. - 2816998 nsec.
-5- std_execution::par_unseq: 0.00292590 sec. - 2925899 nsec.
+1- std::generate:            0.00293424 sec. - 2934243 nsec.
+2- std_execution::seq:       0.00301468 sec. - 3014681 nsec.
+3- std_execution::unseq:     0.0029188  sec. - 2918798 nsec.  *
+4- std_execution::par:       0.00293439 sec. - 2934390 nsec.
+5- std_execution::par_unseq: 0.003789   sec. - 3788999 nsec.
 
 Test run with container: std::deque size: 500000
-1- std::generate:            0.00309177 sec. - 3091774 nsec.
-2- std_execution::seq:       0.00342394 sec. - 3423943 nsec.
-3- std_execution::unseq:     0.00381857 sec. - 3818571 nsec.
-4- std_execution::par:       0.00285701 sec. - 2857014 nsec.  *
-5- std_execution::par_unseq: 0.00366905 sec. - 3669046 nsec.
+1- std::generate:            0.00430354 sec. - 4303543 nsec.
+2- std_execution::seq:       0.00284245 sec. - 2842450 nsec.  *
+3- std_execution::unseq:     0.00347925 sec. - 3479252 nsec.
+4- std_execution::par:       0.00306669 sec. - 3066689 nsec.
+5- std_execution::par_unseq: 0.0035569  sec. - 3556902 nsec.
 
 Test run with container: std::deque size: 500000
-1- std::generate:            0.00355097 sec. - 3550967 nsec.
-2- std_execution::seq:       0.00331504 sec. - 3315038 nsec.  *
-3- std_execution::unseq:     0.00350108 sec. - 3501076 nsec.
-4- std_execution::par:       0.00334390 sec. - 3343903 nsec.
-5- std_execution::par_unseq: 0.00456546 sec. - 4565457 nsec.
+1- std::generate:            0.00282762 sec. - 2827617 nsec.  *
+2- std_execution::seq:       0.00289559 sec. - 2895589 nsec.
+3- std_execution::unseq:     0.00348472 sec. - 3484724 nsec.
+4- std_execution::par:       0.00314357 sec. - 3143571 nsec.
+5- std_execution::par_unseq: 0.00354742 sec. - 3547421 nsec.
 
 Test run with container: std::vector size: 500000
-1- std::generate:            0.00407316 sec. - 4073155 nsec.
-2- std_execution::seq:       0.00390848 sec. - 3908483 nsec.
-3- std_execution::unseq:     0.00285594 sec. - 2855938 nsec.
-4- std_execution::par:       0.00284419 sec. - 2844195 nsec.  *
-5- std_execution::par_unseq: 0.00291743 sec. - 2917429 nsec.
+1- std::generate:            0.00306455 sec. - 3064548 nsec.
+2- std_execution::seq:       0.00280486 sec. - 2804864 nsec.
+3- std_execution::unseq:     0.00280097 sec. - 2800966 nsec.
+4- std_execution::par:       0.00278737 sec. - 2787366 nsec.  *
+5- std_execution::par_unseq: 0.00311602 sec. - 3116015 nsec.
 
 Test run with container: std::vector size: 500000
-1- std::generate:            0.00288564 sec. - 2885638 nsec.
-2- std_execution::seq:       0.00288684 sec. - 2886840 nsec.
-3- std_execution::unseq:     0.00300284 sec. - 3002840 nsec.
-4- std_execution::par:       0.00281034 sec. - 2810337 nsec.  *
-5- std_execution::par_unseq: 0.00281995 sec. - 2819947 nsec.
+1- std::generate:            0.00521946 sec. - 5219458 nsec.
+2- std_execution::seq:       0.00292938 sec. - 2929381 nsec.
+3- std_execution::unseq:     0.00285682 sec. - 2856818 nsec.
+4- std_execution::par:       0.00282528 sec. - 2825284 nsec.  *
+5- std_execution::par_unseq: 0.00294743 sec. - 2947435 nsec.
 
 Test run with container: std::deque size: 2000000000
-1- std::generate:            12.5201 sec. - 12520125096 nsec.
-2- std_execution::seq:       11.9027 sec. - 11902726566 nsec.
-3- std_execution::unseq:     14.1028 sec. - 14102811531 nsec.
-4- std_execution::par:       11.3747 sec. - 11374663397 nsec.  *
-5- std_execution::par_unseq: 13.7144 sec. - 13714409155 nsec.
+1- std::generate:            11.4071 sec. - 11407144761 nsec.  *
+2- std_execution::seq:       11.5637 sec. - 11563652089 nsec.
+3- std_execution::unseq:     14.0225 sec. - 14022535154 nsec.
+4- std_execution::par:       11.8756 sec. - 11875575549 nsec.
+5- std_execution::par_unseq: 14.1391 sec. - 14139089141 nsec.
 
 Test run with container: std::deque size: 2000000000
-1- std::generate:            12.7147 sec. - 12714704022 nsec.
-2- std_execution::seq:       11.8195 sec. - 11819523943 nsec.
-3- std_execution::unseq:     14.0421 sec. - 14042097705 nsec.
-4- std_execution::par:       11.4078 sec. - 11407796961 nsec.  *
-5- std_execution::par_unseq: 14.0681 sec. - 14068087847 nsec.
+1- std::generate:            11.4662 sec. - 11466248729 nsec.  *
+2- std_execution::seq:       11.5333 sec. - 11533268897 nsec.
+3- std_execution::unseq:     14.17   sec. - 14169981092 nsec.
+4- std_execution::par:       11.8276 sec. - 11827637071 nsec.
+5- std_execution::par_unseq: 14.1695 sec. - 14169510433 nsec.
 
 Test run with container: std::vector size: 2000000000
-1- std::generate:            11.8222 sec. - 11822183731 nsec.
-2- std_execution::seq:       11.4552 sec. - 11455249811 nsec.
-3- std_execution::unseq:     11.5014 sec. - 11501435664 nsec.
-4- std_execution::par:       11.4034 sec. - 11403351267 nsec.  *
-5- std_execution::par_unseq: 11.4842 sec. - 11484211897 nsec.
+1- std::generate:            11.6991 sec. - 11699106373 nsec.
+2- std_execution::seq:       11.4525 sec. - 11452465356 nsec.
+3- std_execution::unseq:     11.3647 sec. - 11364693434 nsec.
+4- std_execution::par:       11.3021 sec. - 11302057626 nsec.  *
+5- std_execution::par_unseq: 11.4428 sec. - 11442757529 nsec.
 
 Test run with container: std::vector size: 2000000000
-1- std::generate:            11.6684 sec. - 11668355270 nsec.
-2- std_execution::seq:       11.4414 sec. - 11441360128 nsec.
-3- std_execution::unseq:     11.3903 sec. - 11390342252 nsec.  *
-4- std_execution::par:       11.5238 sec. - 11523822529 nsec.
-5- std_execution::par_unseq: 11.4472 sec. - 11447170887 nsec.
+1- std::generate:            11.5247 sec. - 11524664050 nsec.
+2- std_execution::seq:       11.4572 sec. - 11457238079 nsec.
+3- std_execution::unseq:     11.3733 sec. - 11373288703 nsec.
+4- std_execution::par:       11.2977 sec. - 11297706798 nsec.  *
+5- std_execution::par_unseq: 11.353  sec. - 11353041831 nsec.
 
