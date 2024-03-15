@@ -12,7 +12,7 @@
 template <typename Container>
 static void printResults(const Container& c, std::size_t howMany = 0) {
   howMany = ((0 == howMany) ? c.size() : howMany);
-  std::cout << "results ("<< howMany << "/" << c.size() << "): ";
+  std::cout << "container at " << &c << ": results ("<< howMany << "/" << c.size() << "): ";
   std::size_t counter {0};
   for (const auto item : c) {
     std:: cout << item << ' ';
@@ -126,7 +126,7 @@ static void diceWithContainer(const std::string containerType,
 }
 
 static void runTestExamples() {
-  std::cout << "----- runTestExamples - start -----" << std::endl;
+  std::cout << "----- runTestExamples - start -----\n";
   Dice<RANDOM_VALUE_TYPE>::checkNonDeterministicEntropySource();
 
   diceWithArrays(SIDES);
@@ -143,11 +143,11 @@ static void runTestExamples() {
 
   diceWithContainer<std::vector<RANDOM_VALUE_TYPE>>("std::vector", SIDES, RANDOM_VALUES);
   diceWithContainer<std::vector<RANDOM_VALUE_TYPE>>("std::vector", SIDES, RANDOM_VALUES);
-  std::cout << "----- runTestExamples - end -----" << std::endl;
+  std::cout << "----- runTestExamples - end -----\n\n";
 }
 
 static void makeDiceRolls() {
-  std::cout << "----- makeDiceRolls - start -----" << std::endl;
+  std::cout << "----- makeDiceRolls - start -----\n";
   using rndType = long;
   using cnt = std::vector<rndType>;
 
@@ -158,11 +158,36 @@ static void makeDiceRolls() {
 
   const auto rolls { rollDice<cnt, rndType>(diceSides, howMany, startFrom, executionPolicy) };
   printResults<cnt>(rolls, howMany);
-  std::cout << "----- makeDiceRolls - end -----" << std::endl;
+  std::cout << "----- makeDiceRolls - end -----\n\n";
+}
+
+static void makeDiceRolls_2() {
+  std::cout << "----- makeDiceRolls_2 - start -----\n";
+  using rndType = long;
+  using cnt = std::vector<rndType>;
+  cnt rolls(0);
+
+  constexpr rndType     diceSides       { 1000 };
+  constexpr std::size_t howMany         { 20 };
+  constexpr rndType     startFrom       { 55 };
+  constexpr auto        executionPolicy { std::execution::par };
+
+  std::cout << "makeDiceRolls_2: BEFORE - size: " << rolls.size()
+            << " capacity: " << rolls.capacity()
+            << " at " << &rolls << std::endl;
+
+  rollDice<cnt, rndType>(rolls, diceSides, howMany, startFrom, executionPolicy);
+
+  std::cout << "makeDiceRolls_2: AFTER - size: " << rolls.size()
+            << " capacity: " << rolls.capacity()
+            << " at " << &rolls << std::endl;
+
+  printResults<cnt>(rolls, howMany);
+  std::cout << "----- makeDiceRolls_2 - end -----\n\n";
 }
 
 static void runDiceRoller() {
-  std::cout << "----- runDiceRoller - start -----" << std::endl;
+  std::cout << "----- runDiceRoller - start -----\n";
   using rndType = unsigned int;
   using cnt = std::vector<rndType>;
 
@@ -175,7 +200,7 @@ static void runDiceRoller() {
   constexpr auto        parUnseqexecutionPolicy { std::execution::par_unseq };
   constexpr auto        executionPolicy         { parExecutionPolicy };
 
-  diceRoller<cnt, rndType> dr(diceSides, howMany, startFrom);
+  diceRoller<cnt, rndType> dr(startFrom, diceSides, howMany);
   dr.info();
 
   cnt& rolls_1 { dr.rollDice(executionPolicy) };
@@ -197,16 +222,24 @@ static void runDiceRoller() {
   cnt rolls_4 { dr.rollDice(executionPolicy) };
   printResults<cnt>(rolls_4, howMany);
 
+  // rolls_5 is declared here and passed to the dice roller
+  dr.doReSeedWithClock();
+  cnt rolls_5 {};
+  dr.rollDice(rolls_5, howMany, executionPolicy);
+  printResults<cnt>(rolls_5, howMany);
+
   std::cout << "rolls_1 at: " << &rolls_1 << " must be equal to rolls_2 at " << &rolls_2 << ": " << ((&rolls_1 == &rolls_2) ? "true" : "false") << std::endl;
   std::cout << "rolls_2 at: " << &rolls_2 << " must be equal to rolls_1 at " << &rolls_1 << ": " << ((&rolls_2 == &rolls_1) ? "true" : "false") << std::endl;
   std::cout << "rolls_3 at: " << &rolls_3 << " must not be equal to rolls_1 at " << &rolls_1 << " and rolls_2 at " << &rolls_2 << ": " << (((&rolls_3 != &rolls_1) && (&rolls_3 != &rolls_2)) ? "true" : "false") << std::endl;
   std::cout << "rolls_4 at: " << &rolls_4 << std::endl;
-  std::cout << "----- runDiceRoller - end -----" << std::endl;
+  std::cout << "rolls_5 at: " << &rolls_5 << std::endl;
+  std::cout << "----- runDiceRoller - end -----\n\n";
 }
 
 int main() {
   runTestExamples();
   makeDiceRolls();
+  makeDiceRolls_2();
   runDiceRoller();
   return 0;
 }
