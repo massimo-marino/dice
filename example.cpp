@@ -3,7 +3,6 @@
 //
 #include "dice.h"
 
-#include <iostream>
 #include <array>
 #include <vector>
 #include <deque>
@@ -200,7 +199,7 @@ static void runDiceRollerExample() {
   constexpr auto        parUnseqexecutionPolicy { std::execution::par_unseq };
   constexpr auto        executionPolicy         { parExecutionPolicy };
 
-  diceRoller<cnt, rndType> dr(startFrom, diceSides, howMany);
+  DiceRoller<cnt, rndType> dr(startFrom, diceSides, howMany);
   dr.logInfo();
 
   cnt& rolls_1 { dr.rollDice(executionPolicy) };
@@ -228,12 +227,12 @@ static void runDiceRollerExample() {
   dr.rollDice(rolls_5, howMany, executionPolicy);
   printResults<cnt>(rolls_5, howMany);
 
-  std::cout << "rolls_1 at: " << &rolls_1 << " must be equal to rolls_2 at " << &rolls_2 << ": " << ((&rolls_1 == &rolls_2) ? "true" : "false") << std::endl;
-  std::cout << "rolls_2 at: " << &rolls_2 << " must be equal to rolls_1 at " << &rolls_1 << ": " << ((&rolls_2 == &rolls_1) ? "true" : "false") << std::endl;
-  std::cout << "rolls_3 at: " << &rolls_3 << " must not be equal to rolls_1 at " << &rolls_1 << " and rolls_2 at " << &rolls_2 << ": " << (((&rolls_3 != &rolls_1) && (&rolls_3 != &rolls_2)) ? "true" : "false") << std::endl;
-  std::cout << "rolls_4 at: " << &rolls_4 << std::endl;
-  std::cout << "rolls_5 at: " << &rolls_5 << std::endl;
-  std::cout << "----- runDiceRollerExample - end -----\n\n";
+  std::cout << "rolls_1 at: " << &rolls_1 << " must be equal to rolls_2 at " << &rolls_2 << ": " << ((&rolls_1 == &rolls_2) ? "true" : "false") << std::endl
+            << "rolls_2 at: " << &rolls_2 << " must be equal to rolls_1 at " << &rolls_1 << ": " << ((&rolls_2 == &rolls_1) ? "true" : "false") << std::endl
+            << "rolls_3 at: " << &rolls_3 << " must not be equal to rolls_1 at " << &rolls_1 << " and rolls_2 at " << &rolls_2 << ": " << (((&rolls_3 != &rolls_1) && (&rolls_3 != &rolls_2)) ? "true" : "false") << std::endl
+            << "rolls_4 at: " << &rolls_4 << std::endl
+            << "rolls_5 at: " << &rolls_5 << std::endl
+            << "----- runDiceRollerExample - end -----\n\n";
 }
 
 static void rollDiceOnceExample() {
@@ -254,6 +253,7 @@ static void rollDiceOnceExample() {
 }
 
 static void makeDiceExample() {
+  std::cout << "----- makeDiceExample - start -----\n";
   using rndType = unsigned int;
 
   constexpr rndType diceSides { 6 };
@@ -261,6 +261,7 @@ static void makeDiceExample() {
 
   auto d { makeDice<rndType>(diceSides, startFrom)};
   d.logInfo();
+  std::cout << "----- makeDiceExample - end -----\n\n";
 }
 
 static void runAllExamples() {

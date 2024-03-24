@@ -8,69 +8,32 @@
 #include <algorithm>
 #include <execution>
 
-template<typename RANDOM_VALUE_TYPE,
-         typename Engine = std::mt19937_64>  // std::mt19937
-class Dice final {
-private:
+template <typename Engine = std::mt19937_64>  // std::mt19937
+class DiceBase {
+protected:
   using engine_type = Engine;
   using seedType = typename engine_type::result_type;
 
-  mutable RANDOM_VALUE_TYPE sides_;
-  mutable std::uniform_int_distribution<RANDOM_VALUE_TYPE> distr_;
   mutable seedType seed_;
   mutable engine_type urbg_;
 
-  static seedType clockSeed() {
-    return static_cast<unsigned long>(std::chrono::system_clock::now().time_since_epoch().count());
-  }
-
 public:
-  explicit Dice() :
-      sides_ {6},
-      distr_ {1, 6},
-      seed_  {clockSeed()},
-      urbg_  {seed_}
+  explicit DiceBase() :
+      seed_ {clockSeed()},
+      urbg_ {seed_}
   {}
 
-  static void checkNonDeterministicEntropySource() {
+  static void checkNonDeterministicEntropySource() noexcept {
     std::random_device rd;
     const bool non_deterministic { (rd.entropy() > 0) };
     const bool deterministic     { (rd.entropy() == 0) };
 
-    std::cout << "Non deterministic: " << ((non_deterministic) ? "Yes" : "No") << std::endl;
-    std::cout << "Deterministic:     " << ((deterministic) ? "Yes" : "No") << std::endl << std::endl;
+    std::cout << "Non deterministic: " << ((non_deterministic) ? "Yes" : "No") << std::endl
+              << "Deterministic:     " << ((deterministic) ? "Yes" : "No") << std::endl << std::endl;
   }
 
-  // generate numbers in [startFrom, (startFrom + (sides - 1)))] and seed with clock
-  explicit Dice(const RANDOM_VALUE_TYPE sides, const RANDOM_VALUE_TYPE startFrom) :
-      sides_ {sides},
-      distr_ {startFrom, (startFrom + (sides_ - 1))},
-      seed_  {clockSeed()},
-      urbg_  {seed_}
-  {}
-
-  // copy ctor
-  Dice(const Dice& rhs) {
-    sides_ = rhs.sides_;
-    distr_ = rhs.distr_;
-    seed_  = rhs.seed_;
-    urbg_  = rhs.urbg_;
-  }
-
-  // copy assignment operator
-  Dice& operator=(const Dice& rhs) {
-    sides_ = rhs.sides_;
-    distr_ = rhs.distr_;
-    seed_  = rhs.seed_;
-    urbg_  = rhs.urbg_;
-    return *this;
-  }
-
-  void logInfo() const {
-    std::cout << "Dice::logInfo: dice at " << this
-              << " with " << sides_ << " sides, seed " << seed_
-              << " generates from " << distr_.min() << " to " << distr_.max()
-              << std::endl;
+  static seedType clockSeed() noexcept {
+    return static_cast<unsigned long>(std::chrono::system_clock::now().time_since_epoch().count());
   }
 
   void doReSeed(const seedType newSeed) const noexcept {
@@ -83,21 +46,68 @@ public:
     urbg_.seed(seed_);
   }
 
-  int operator () () const noexcept {
-    return distr_(urbg_);
+  seedType seed() const noexcept {
+    return seed_;
+  }
+};  // class DiceBase
+
+// Dice that generates integers has an integer number of sides
+template<typename INTEGER_RANDOM_VALUE_TYPE,
+         typename Engine = std::mt19937_64>  // std::mt19937
+class Dice final : public DiceBase<Engine> {
+private:
+  mutable INTEGER_RANDOM_VALUE_TYPE sides_;
+  mutable std::uniform_int_distribution<INTEGER_RANDOM_VALUE_TYPE> distr_;
+
+public:
+  explicit Dice() :
+      DiceBase<Engine>(),
+      sides_ {6},
+      distr_ {1, 6}
+  {}
+
+  // generate integer numbers in [startFrom, (startFrom + (sides - 1)))] and seed with clock
+  explicit Dice(const INTEGER_RANDOM_VALUE_TYPE sides, const INTEGER_RANDOM_VALUE_TYPE startFrom) :
+      DiceBase<Engine>(),
+      sides_ {sides},
+      distr_ {startFrom, (startFrom + (sides_ - 1))}
+  {}
+
+  // copy ctor
+  Dice(const Dice& rhs) {
+    sides_ = rhs.sides_;
+    distr_ = rhs.distr_;
+    DiceBase<Engine>::seed_ = rhs.seed_;
+    DiceBase<Engine>::urbg_ = rhs.urbg_;
   }
 
-  seedType seed() const {
-    return seed_;
+  // copy assignment operator
+  Dice& operator=(const Dice& rhs) {
+    sides_ = rhs.sides_;
+    distr_ = rhs.distr_;
+    DiceBase<Engine>::seed_ = rhs.seed_;
+    DiceBase<Engine>::urbg_ = rhs.urbg_;
+    return *this;
+  }
+
+  void logInfo() const noexcept {
+    std::cout << "Dice::logInfo: dice at " << this
+              << " with " << sides_ << " sides, seed " << DiceBase<Engine>::seed_
+              << " generates from " << distr_.min() << " to " << distr_.max()
+              << std::endl;
+  }
+
+  int operator () () const noexcept {
+    return distr_(DiceBase<Engine>::urbg_);
   }
 };  // class Dice
 
 
-// diceRoller: class-based support for a dice roller
+// DiceRoller: class-based support for a dice roller
 template <typename Container,
           typename RANDOM_VALUE_TYPE,
           typename Engine = std::mt19937_64>  // std::mt19937
-class diceRoller final {
+class DiceRoller final {
 private:
   using engine_type = Engine;
   using seedType = typename engine_type::result_type;
@@ -109,7 +119,7 @@ private:
   mutable Container rolls_             {};
 
 public:
-  diceRoller(const RANDOM_VALUE_TYPE startFrom,
+  DiceRoller(const RANDOM_VALUE_TYPE startFrom,
              const RANDOM_VALUE_TYPE sides,
              const std::size_t randomValues = 0) :
   sides_ (sides),
@@ -125,22 +135,22 @@ public:
     rolls_ = rolls;
   }
 
-  void doReseed(const seedType newSeed) const {
+  void doReseed(const seedType newSeed) const noexcept {
     dice_.doReSeed(newSeed);
   }
 
-  void doReSeedWithClock() const {
+  void doReSeedWithClock() const noexcept {
     dice_.doReSeedWithClock();
   }
 
-  void doReSeedWithSame() const {
+  void doReSeedWithSame() const noexcept {
     dice_.doReSeed(dice_.seed());
   }
 
   // print the contents of a container; all of them by default if howMany is 0
-  void printResults(const Container& c, std::size_t howMany = 0) const {
+  void printResults(const Container& c, std::size_t howMany = 0) const noexcept {
     howMany = ((0 == howMany) ? c.size() : howMany);
-    std::cout << "diceRoller::printResults: container at " << &c << ": results ("<< howMany << "/" << c.size() << "): ";
+    std::cout << "DiceRoller::printResults: container at " << &c << ": results ("<< howMany << "/" << c.size() << "): ";
     std::size_t counter {0};
     for (const auto item : c) {
       std:: cout << item << ' ';
@@ -155,8 +165,8 @@ public:
     std::cout << '\n';
   }
 
-  void logInfo() const {
-    std::cout << "diceRoller::logInfo: dice at " << &dice_
+  void logInfo() const noexcept {
+    std::cout << "DiceRoller::logInfo: dice at " << &dice_
               << " with " << sides_ << " sides"
               << " generates " << randomValues_ << " values"
               << " from " << startFrom_
@@ -166,17 +176,17 @@ public:
               << std::endl;
   }
 
-  Container& rollDice(const auto policyType) const {
+  Container& rollDice(const auto policyType) const noexcept {
     // roll the dice
     std::for_each(policyType, rolls_.begin(), rolls_.end(), [&] (RANDOM_VALUE_TYPE &arg) { arg = dice_(); } );
 
     //printResults(rolls_, 20);
-    //std::cout << "diceRoller::rollDice: rolls_ at " << &rolls_ << std::endl;
+    //std::cout << "DiceRoller::rollDice: rolls_ at " << &rolls_ << std::endl;
     return rolls_;
   }
 
   // container is passed by ref from caller, resized, filled, and returned by the same argument
-  void rollDice(Container& rolls, const std::size_t randomValues, const auto policyType) const {
+  void rollDice(Container& rolls, const std::size_t randomValues, const auto policyType) const noexcept {
     // allocate the room needed in the container
     rolls.reserve(randomValues);
     rolls.resize(randomValues);
@@ -185,7 +195,7 @@ public:
     std::for_each(policyType, rolls.begin(), rolls.end(), [&] (RANDOM_VALUE_TYPE &arg) { arg = dice_(); } );
 
     //printResults(rolls, 20);
-    //std::cout << "diceRoller::rollDice: rolls at " << &rolls << std::endl;
+    //std::cout << "DiceRoller::rollDice: rolls at " << &rolls << std::endl;
   }
 };  // class diceRoller
 
