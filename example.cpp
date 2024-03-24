@@ -186,8 +186,8 @@ static void makeDiceRolls_2() {
   std::cout << "----- makeDiceRolls_2 - end -----\n\n";
 }
 
-static void runDiceRoller() {
-  std::cout << "----- runDiceRoller - start -----\n";
+static void runDiceRollerExample() {
+  std::cout << "----- runDiceRollerExample - start -----\n";
   using rndType = unsigned int;
   using cnt = std::vector<rndType>;
 
@@ -201,7 +201,7 @@ static void runDiceRoller() {
   constexpr auto        executionPolicy         { parExecutionPolicy };
 
   diceRoller<cnt, rndType> dr(startFrom, diceSides, howMany);
-  dr.info();
+  dr.logInfo();
 
   cnt& rolls_1 { dr.rollDice(executionPolicy) };
   printResults<cnt>(rolls_1, howMany);
@@ -233,13 +233,46 @@ static void runDiceRoller() {
   std::cout << "rolls_3 at: " << &rolls_3 << " must not be equal to rolls_1 at " << &rolls_1 << " and rolls_2 at " << &rolls_2 << ": " << (((&rolls_3 != &rolls_1) && (&rolls_3 != &rolls_2)) ? "true" : "false") << std::endl;
   std::cout << "rolls_4 at: " << &rolls_4 << std::endl;
   std::cout << "rolls_5 at: " << &rolls_5 << std::endl;
-  std::cout << "----- runDiceRoller - end -----\n\n";
+  std::cout << "----- runDiceRollerExample - end -----\n\n";
 }
 
-int main() {
+static void rollDiceOnceExample() {
+  std::cout << "----- rollDiceOnceExample - start -----\n";
+  using rndType = unsigned int;
+  using cnt = std::vector<rndType>;
+
+  constexpr rndType     diceSides { 6 };
+  constexpr rndType     startFrom { 1 };
+  constexpr std::size_t howMany   { 50 };
+  cnt rolls {};
+
+  for (std::size_t i { 1 }; i <= howMany; ++i) {
+    rolls.push_back(rollDiceOnce<unsigned int>(diceSides, startFrom));
+  }
+  printResults<cnt>(rolls);
+  std::cout << "----- rollDiceOnceExample - end -----\n\n";
+}
+
+static void makeDiceExample() {
+  using rndType = unsigned int;
+
+  constexpr rndType diceSides { 6 };
+  constexpr rndType startFrom { 1 };
+
+  auto d { makeDice<rndType>(diceSides, startFrom)};
+  d.logInfo();
+}
+
+static void runAllExamples() {
   runTestExamples();
   makeDiceRolls();
   makeDiceRolls_2();
-  runDiceRoller();
+  runDiceRollerExample();
+  rollDiceOnceExample();
+  makeDiceExample();
+}
+
+int main() {
+  runAllExamples();
   return 0;
 }

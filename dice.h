@@ -9,7 +9,7 @@
 #include <execution>
 
 template<typename RANDOM_VALUE_TYPE,
-         typename Engine = std::mt19937>  // std::mt19937_64 shows poorer performance
+         typename Engine = std::mt19937_64>  // std::mt19937
 class Dice final {
 private:
   using engine_type = Engine;
@@ -66,6 +66,13 @@ public:
     return *this;
   }
 
+  void logInfo() const {
+    std::cout << "Dice::logInfo: dice at " << this
+              << " with " << sides_ << " sides, seed " << seed_
+              << " generates from " << distr_.min() << " to " << distr_.max()
+              << std::endl;
+  }
+
   void doReSeed(const seedType newSeed) const noexcept {
     seed_ = newSeed;
     urbg_.seed(newSeed);
@@ -89,7 +96,7 @@ public:
 // diceRoller: class-based support for a dice roller
 template <typename Container,
           typename RANDOM_VALUE_TYPE,
-          typename Engine = std::mt19937>  // std::mt19937_64 shows poorer performance
+          typename Engine = std::mt19937_64>  // std::mt19937
 class diceRoller final {
 private:
   using engine_type = Engine;
@@ -110,7 +117,7 @@ public:
   startFrom_ (startFrom)
   {
     // make a dice and seed with clock
-    Dice<RANDOM_VALUE_TYPE>dice(sides, startFrom);
+    Dice<RANDOM_VALUE_TYPE, engine_type>dice(sides, startFrom);
     dice_ = dice;
 
     // allocate the container
@@ -148,8 +155,8 @@ public:
     std::cout << '\n';
   }
 
-  void info() const {
-    std::cout << "diceRoller::info: dice at " << &dice_
+  void logInfo() const {
+    std::cout << "diceRoller::logInfo: dice at " << &dice_
               << " with " << sides_ << " sides"
               << " generates " << randomValues_ << " values"
               << " from " << startFrom_
@@ -185,13 +192,14 @@ public:
 
 // quick and dirty dice roller: container allocated here and returned
 template <typename Container,
-          typename RANDOM_VALUE_TYPE>
+          typename RANDOM_VALUE_TYPE,
+          typename Engine = std::mt19937_64>  // std::mt19937
 Container rollDice(const RANDOM_VALUE_TYPE sides,
                    const std::size_t randomValues,
                    const RANDOM_VALUE_TYPE startFrom,
                    const auto policyType) {
   // make a dice and seed with clock
-  Dice<RANDOM_VALUE_TYPE>dice(sides, startFrom);
+  Dice<RANDOM_VALUE_TYPE, Engine>dice(sides, startFrom);
 
   // allocate the container
   Container rolls(randomValues);
@@ -213,14 +221,15 @@ Container rollDice(const RANDOM_VALUE_TYPE sides,
 // quick and dirty dice roller: container is passed by ref from caller,
 // resized, filled, and returned by the same argument
 template <typename Container,
-          typename RANDOM_VALUE_TYPE>
+          typename RANDOM_VALUE_TYPE,
+          typename Engine = std::mt19937_64>  // std::mt19937
 void rollDice(Container& rolls,
               const RANDOM_VALUE_TYPE sides,
               const std::size_t randomValues,
               const RANDOM_VALUE_TYPE startFrom,
               const auto policyType) {
   // make a dice and seed with clock
-  Dice<RANDOM_VALUE_TYPE>dice(sides, startFrom);
+  Dice<RANDOM_VALUE_TYPE, Engine>dice(sides, startFrom);
 
 //  std::cout << "rollDice: BEFORE: size: " << rolls.size()
 //            << " capacity: " << rolls.capacity()
@@ -236,4 +245,26 @@ void rollDice(Container& rolls,
 
   // roll the dice
   std::for_each(policyType, rolls.begin(), rolls.end(), [&dice] (RANDOM_VALUE_TYPE &arg) { arg = dice(); } );
+}
+
+template <typename RANDOM_VALUE_TYPE,
+          typename Engine = std::mt19937_64>  // std::mt19937
+RANDOM_VALUE_TYPE rollDiceOnce(const RANDOM_VALUE_TYPE sides,
+                               const RANDOM_VALUE_TYPE startFrom) {
+  // make a dice and seed with clock
+  Dice<RANDOM_VALUE_TYPE, Engine>dice(sides, startFrom);
+
+  // roll the dice and return the generated random value
+  return dice();
+}
+
+template <typename RANDOM_VALUE_TYPE,
+          typename Engine = std::mt19937_64>  // std::mt19937
+Dice<RANDOM_VALUE_TYPE, Engine> makeDice(const RANDOM_VALUE_TYPE diceSides,
+                                         const RANDOM_VALUE_TYPE startFrom) {
+  // make a dice and seed with clock
+  Dice<RANDOM_VALUE_TYPE, Engine> dice(diceSides, startFrom);
+
+  // return the dice
+  return dice;
 }
